@@ -24,6 +24,7 @@ func main() {
 	streamPic := takePicture()
 
 	t := <-streamThermo
+	ctx.Done()
 	text := createTweetText(t)
 
 	s := <-streamPic
@@ -39,6 +40,7 @@ func createTweetText(th sbth.ThermohygroPacket) string {
 }
 
 func getTemperture(ctx context.Context) <-chan sbth.ThermohygroPacket {
+	fmt.Println(config)
 	return sbth.Scan(config.Address, ctx)
 }
 func takePicture() <-chan string {
