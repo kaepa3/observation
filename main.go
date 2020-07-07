@@ -36,7 +36,7 @@ func readConfig() {
 }
 
 func createTweetText(th sbth.ThermohygroPacket) string {
-	return fmt.Sprintf("温度：%.2f湿度：%.2f\n", th.GetTemperature(), th.GetHumidity())
+	return fmt.Sprintf("温度：%.2f湿度：%d電池%d\n", th.GetTemperature(), th.GetHumidity(), th.GetBattery())
 }
 
 func getTemperture(ctx context.Context) <-chan sbth.ThermohygroPacket {
