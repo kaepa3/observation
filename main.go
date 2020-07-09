@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"time"
 
 	"context"
 
@@ -10,12 +11,13 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/kaepa3/sbth"
+	"github.com/kaepa3/tweet/config"
 	"github.com/kaepa3/tweet/tweetapi"
 )
 
-var config Config
+var conf AppConfig
 
-type Config struct {
+type AppConfig struct {
 	Address     string
 	TwitterConf config.TwitterConfig
 }
@@ -32,7 +34,7 @@ func main() {
 	tweet(text, s)
 }
 func readConfig() {
-	toml.DecodeFile("config.toml", &config)
+	toml.DecodeFile("config.toml", &conf)
 }
 
 func createTweetText(th sbth.ThermohygroPacket) string {
@@ -45,7 +47,7 @@ func getTemperture() <-chan string {
 	timer := time.NewTimer(time.Second * 8)
 	go func() {
 		defer close(valStream)
-		ch := sbth.Scan(config.Address, ctx)
+		ch := sbth.Scan(conf.Address, ctx)
 		select {
 		case p := <-ch:
 			valStream <- createTweetText(p)
@@ -66,13 +68,13 @@ func takePicture() <-chan string {
 		if err := os.Remove(file); err != nil {
 			fmt.Println(err)
 		}
-		err := exec.Command("sudo", "raspistill", "-o", file).Run()
+		exec.Command("sudo", "raspistill", "-o", file).Run()
 		valStream <- file
 	}()
 	return valStream
 }
 func tweet(text string, imgPath string) {
 
-	api := tweetapi.GetTwitterApi(*conf, Tweet)
+	api := tweetapi.GetTwitterApi(conf.TwitterConf)
 	api.Tweet(text, imgPath)
 }
