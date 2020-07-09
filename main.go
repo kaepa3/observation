@@ -2,18 +2,22 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"os/exec"
 
 	"context"
 
+	"os"
+
 	"github.com/BurntSushi/toml"
 	"github.com/kaepa3/sbth"
+	"github.com/kaepa3/tweet/tweetapi"
 )
 
 var config Config
 
 type Config struct {
-	Address string
+	Address     string
+	TwitterConf config.TwitterConfig
 }
 
 func main() {
@@ -45,12 +49,17 @@ func takePicture() <-chan string {
 	valStream := make(chan string)
 	go func() {
 		defer close(valStream)
-		time.Sleep(time.Second * 1)
-		valStream <- "pic"
+		file := "image.jpg"
+		if err := os.Remove(file); err != nil {
+			fmt.Println(err)
+		}
+		err := exec.Command("sudo", "raspistill", "-o", file).Run()
+		valStream <- file
 	}()
 	return valStream
 }
 func tweet(text string, imgPath string) {
-	fmt.Println(text)
-	fmt.Println(imgPath)
+
+	api := tweetapi.GetTwitterApi(*conf, Tweet)
+	api.Tweet(text, imgPath)
 }
