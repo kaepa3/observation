@@ -27,8 +27,10 @@ type AppConfig struct {
 func main() {
 	readConfig()
 
-	text := getTemperture()
+	streamText := getTemperture()
+
 	streamPic := takePicture()
+	text := <- streamText
 	s := <-streamPic
 	tweet(text, s)
 }
@@ -40,52 +42,45 @@ func createTweetText(th sbth.ThermohygroPacket) string {
 	return fmt.Sprintf("温度：%.2f 湿度：%d 電池：%d\n#枝豆日記", th.GetTemperature(), th.GetHumidity(), th.GetBattery())
 }
 
-func getTemperture() string {
+func getTemperture() <-chan string {
 	ctx, _ := context.WithCancel(context.Background())
-	text := ""
+	valStream := make(chan string)
 	fmt.Println("timer:" + strconv.Itoa(conf.Timeout))
 	timer := time.NewTimer(time.Second * time.Duration(conf.Timeout))
 	fmt.Println("search:" + conf.Address)
 	ch := sbth.Scan(conf.Address, ctx)
 
-	done := make(chan struct{})
 	go func() {
-		for {
-			select {
-			case p := <-ch:
-				fmt.Println("come!!!!")
-				text = createTweetText(p)
-				close(done)
-				return
-			case <-ctx.Done():
-				fmt.Println("Done!!!!")
-				text = "Thermohygro Error"
-				close(done)
-				return
-			case <-timer.C:
+		defer close(valStream)
+		select {
+		case p := <-ch:
+			fmt.Println("come!!!!")
+			valStream <- createTweetText(p)
+			break
+		case <-ctx.Done():
+			fmt.Println("Done!!!!")
+			valStream <- "Thermohygro Error"
+			break
+		case <-timer.C:
 
-				fmt.Println("time!!!!")
-				text = "Timeout Error"
-				close(done)
-				return
-			}
+			fmt.Println("time!!!!")
+			valStream <- "Timeout Error"
+			break
 		}
-		fmt.Println("done!!!!")
 	}()
-	<-done
-	return text
+	return valStream
 }
 func takePicture() <-chan string {
 	valStream := make(chan string)
 	go func() {
 		defer close(valStream)
 		file := "image.jpg"
-		fmt.Println("delete image")
 		if err := os.Remove(file); err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("take picture")
 		exec.Command("sudo", "raspistill", "-rot", "90", "-o", file).Run()
+		fmt.Println("take finish")
 		valStream <- file
 	}()
 	return valStream
