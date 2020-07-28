@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"strconv"
 	"time"
@@ -30,7 +31,7 @@ func main() {
 	streamText := getTemperture()
 
 	streamPic := takePicture()
-	text := <- streamText
+	text := <-streamText
 	s := <-streamPic
 	tweet(text, s)
 }
@@ -45,25 +46,25 @@ func createTweetText(th sbth.ThermohygroPacket) string {
 func getTemperture() <-chan string {
 	ctx, _ := context.WithCancel(context.Background())
 	valStream := make(chan string)
-	fmt.Println("timer:" + strconv.Itoa(conf.Timeout))
+	log.Println("timer:" + strconv.Itoa(conf.Timeout))
 	timer := time.NewTimer(time.Second * time.Duration(conf.Timeout))
-	fmt.Println("search:" + conf.Address)
+	log.Println("search:" + conf.Address)
 	ch := sbth.Scan(conf.Address, ctx)
 
 	go func() {
 		defer close(valStream)
 		select {
 		case p := <-ch:
-			fmt.Println("come!!!!")
+			log.Println("come!!!!")
 			valStream <- createTweetText(p)
 			break
 		case <-ctx.Done():
-			fmt.Println("Done!!!!")
+			log.Println("Done!!!!")
 			valStream <- "Thermohygro Error"
 			break
 		case <-timer.C:
 
-			fmt.Println("time!!!!")
+			log.Println("time!!!!")
 			valStream <- "Timeout Error"
 			break
 		}
@@ -76,17 +77,19 @@ func takePicture() <-chan string {
 		defer close(valStream)
 		file := "image.jpg"
 		if err := os.Remove(file); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
-		fmt.Println("take picture")
+		log.Println("take picture")
 		exec.Command("sudo", "raspistill", "-rot", "90", "-o", file).Run()
-		fmt.Println("take finish")
+		log.Println("take finish")
 		valStream <- file
 	}()
 	return valStream
 }
 func tweet(text string, imgPath string) {
 
+	log.Println("tweet start")
 	api := tweetapi.GetTwitterApi(conf.TwitterConf)
 	api.Tweet(text, imgPath)
+	log.Println("tweet end")
 }
