@@ -20,6 +20,7 @@ var conf AppConfig
 type AppConfig struct {
 	Address     string
 	TwitterConf config.TwitterConfig
+	Timeout     int
 }
 
 func main() {
@@ -44,7 +45,7 @@ func createTweetText(th sbth.ThermohygroPacket) string {
 func getTemperture() <-chan string {
 	ctx, _ := context.WithCancel(context.Background())
 	valStream := make(chan string)
-	timer := time.NewTimer(time.Second * 8)
+	timer := time.NewTimer(time.Second * conf.Timeout)
 	go func() {
 		defer close(valStream)
 		ch := sbth.Scan(conf.Address, ctx)
