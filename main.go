@@ -38,13 +38,13 @@ func readConfig() {
 }
 
 func createTweetText(th sbth.ThermohygroPacket) string {
-	return fmt.Sprintf("温度：%.2f 湿度：%d 電池：%d\n", th.GetTemperature(), th.GetHumidity(), th.GetBattery())
+	return fmt.Sprintf("温度：%.2f 湿度：%d 電池：%d\n#枝豆日記", th.GetTemperature(), th.GetHumidity(), th.GetBattery())
 }
 
 func getTemperture() <-chan string {
 	ctx, _ := context.WithCancel(context.Background())
 	valStream := make(chan string)
-	timer := time.NewTimer(time.Second * 8)
+	timer := time.NewTimer(time.Second * 10)
 	go func() {
 		defer close(valStream)
 		ch := sbth.Scan(conf.Address, ctx)
@@ -68,7 +68,7 @@ func takePicture() <-chan string {
 		if err := os.Remove(file); err != nil {
 			fmt.Println(err)
 		}
-		exec.Command("sudo", "raspistill", "-o", file).Run()
+		exec.Command("sudo", "raspistill", "-rot", "90", "-o", file).Run()
 		valStream <- file
 	}()
 	return valStream
