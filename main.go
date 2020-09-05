@@ -23,6 +23,7 @@ type AppConfig struct {
 	Address     string
 	TwitterConf config.TwitterConfig
 	Timeout     int
+	Text        string
 }
 
 func main() {
@@ -40,7 +41,7 @@ func readConfig() {
 }
 
 func createTweetText(th sbth.ThermohygroPacket) string {
-	return fmt.Sprintf("温度：%.2f 湿度：%d 電池：%d\n#枝豆日記", th.GetTemperature(), th.GetHumidity(), th.GetBattery())
+	return fmt.Sprintf("温度：%.2f 湿度：%d 電池：%d\n", th.GetTemperature(), th.GetHumidity(), th.GetBattery(), conf.Text)
 }
 
 func getTemperture() <-chan string {
