@@ -81,7 +81,7 @@ func takePicture() <-chan string {
 			log.Println(err)
 		}
 		log.Println("take picture")
-		exec.Command("sudo", "raspistill", "-rot", "90", "-o", file).Run()
+		exec.Command("sudo", "raspistill", "-rot", "180", "-o", file).Run()
 		log.Println("take finish")
 		valStream <- file
 	}()
